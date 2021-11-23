@@ -1,0 +1,8 @@
+[Unit]
+Description=Run Forever
+
+[Service]
+ExecStart=python3 /users/fspaeh/cs655-pw-cracker/src/daemon.sh
+
+[Install]
+WantedBy=multi-user.target

@@ -2,7 +2,7 @@
 Description=Run Forever
 
 [Service]
-ExecStart=python3 /users/fspaeh/cs655-pw-cracker/src/daemon.sh
+ExecStart=/users/fspaeh/cs655-pw-cracker/src/start.sh
 
 [Install]
 WantedBy=multi-user.target

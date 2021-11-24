@@ -1,5 +1,8 @@
 #!/bin/bash
 
+sudo chmod -R a+rwX /home
+cd /home
+
 if cd cs655-pw-cracker
 then
   git pull

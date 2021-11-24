@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cd src
+cd /users/fspaeh/cs655-pw-cracker/src
 python daemon.py

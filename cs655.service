@@ -2,7 +2,7 @@
 Description=Run Forever
 
 [Service]
-ExecStart=/users/fspaeh/cs655-pw-cracker/start.sh
+ExecStart=/home/cs655-pw-cracker/start.sh
 
 [Install]
 WantedBy=multi-user.target

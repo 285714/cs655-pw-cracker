@@ -4,7 +4,7 @@ if cd cs655-pw-cracker
 then
   git pull
 else
-  git clone git@github.com:285714/cs655-pw-cracker.git
+  git clone https://github.com/285714/cs655-pw-cracker.git
   cd cs655-pw-cracker
 fi
 

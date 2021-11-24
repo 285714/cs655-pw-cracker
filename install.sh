@@ -11,7 +11,7 @@ else
   cd cs655-pw-cracker
 fi
 
-sudo mv cs655.service /etc/systemd/system
+sudo cp cs655.service /etc/systemd/system
 sudo systemctl daemon-reload
 sudo systemctl enable cs655.service
 sudo systemctl restart cs655.service

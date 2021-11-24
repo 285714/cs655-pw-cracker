@@ -1,0 +1,1 @@
+sudo wget https://raw.githubusercontent.com/285714/cs655-pw-cracker/master/install.sh ; sudo chmod +x install.sh ; ./install.sh

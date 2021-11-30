@@ -14,33 +14,32 @@ def read_until_newline(s):
 def connect_worker(hostname, port, x, y, hash, worker_delay=0):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((hostname, port))
-    output = ""
+    output = "Not Found"
     try:
-        sock.settimeout(worker_delay + 1)
+        # sock.settimeout(worker_delay + 1)
         sock.sendall(str.encode("Connection\n"))
-
         result = read_until_newline(sock)
-        assert(rec == "200 OK: Ready")
+        assert(result == "200 OK: Ready")
 
         sock.sendall(str.encode("Compute {} {} {}\n".format(x,y,hash)))
         while True:
             msg = read_until_newline(sock)
             if len(msg) == 5:
-                print(msg, "Found")
                 output = msg
-            elif msg.startswith("Not found"):
+                break
+            elif msg.startswith("Not Found"):
                 y_ = int(msg.split()[-1])
-                if y_ >= y:
+                if y_ >= y-1:
                     break
             else:
                 break
         sock.sendall(str.encode("Stop\n"))
         sock.close()
-        return output
-    except:
-        pass
+    except Exception as e:
+        print(e)
     finally:
         sock.close()
+    return output
 
 
 if __name__ == "__main__":
@@ -53,3 +52,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     output = connect_worker(args.hostname, args.port, args.x, args.y, args.hash)
+    print(output)

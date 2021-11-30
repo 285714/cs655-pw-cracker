@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CS655 Password Cracker</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <style>
+      body {
+        font-family: sans-serif, Arial;
+        margin: auto;
+        max-width: 500px;
+        text-align: center;
+      }
+      table {
+        padding-top: 1em;
+        text-align: left;
+        margin: auto;
+      }
+    </style>
+    <script>
+      rowIds = {};
+
+      function crack(hash) {
+        $.get("/crack/" + encodeURIComponent(hash));
+        rowIds[hash] = parseInt(Math.random() * 1e9);
+        row = '<tr id="row-' + rowIds[hash] + '"><td>' + hash + '</td>' +
+          '<td class="solution">Computing...</td><td class="time"></td></tr>';
+        $('table tr:last').after(row);
+      }
+
+      $(function() {
+        $("form").submit(function(event) {
+          crack($("#hash").val());
+          $("#hash").val("");
+          event.preventDefault();
+        });
+      })
+    </script>
+  </head>
+  <body>
+    <h1>CS655 Password Cracker</h1>
+    <form>
+      <label for="hash">MD5-Hash</label>
+      <input type="text" id="hash" name="hash">
+      <input type="submit" value="Crack">
+    </form>
+    <table>
+      <tr>
+        <th>MD5-Hash</th>
+        <th>Solution</th>
+        <th>Time</th>
+      </tr>
+    </table>
+  </body>
+</html>
+

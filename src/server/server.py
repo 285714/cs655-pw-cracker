@@ -45,7 +45,7 @@ def connect_worker(sock, x, y, hash, worker_delay=0):
         sock.close()
     return output
 
-def parition_job(worker_list, n): # to change
+def partition_job(worker_list, n): # to change
     assert(len(worker_list) >= n)
     assigned_workers = []
     per_worker = int(math.ceil(MAX_RANGE/n))
@@ -59,7 +59,7 @@ def parition_job(worker_list, n): # to change
 def map_reduce(worker_list, hash, n):
     sockets = []
     processes = []
-    assigned_workers = parition_job(worker_list, n)
+    assigned_workers = partition_job(worker_list, n)
     output = ""
     pool = Pool()
     for (hostname, port, x, y) in assigned_workers:
@@ -94,7 +94,8 @@ if __name__ == "__main__":
     # parser.add_argument('--x', type=int, required=True)
     # parser.add_argument('--y', type=int, required=True)
     parser.add_argument('--hash', type=str, required=True)
+    parser.add_argument('--num_workers', type=int, required=True)
 
     args = parser.parse_args()
-    output = map_reduce(WORKERS, args.hash, 2)
+    output = map_reduce(WORKERS, args.hash, args.num_workers)
     print(output)

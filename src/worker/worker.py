@@ -2,12 +2,11 @@ import sys
 import socket
 import search
 import multiprocessing
+import argparse
 
 # format of the command line arguments: server.py hostname port
 # setting port number to a command line parameter or to the default value 58123
 HOST = '0.0.0.0'
-PORT = 58123
-port = int(sys.argv[1]) if len(sys.argv) > 1 else PORT
 frequency = 10000 # number of steps that the worker sends
 
 """
@@ -82,7 +81,11 @@ class Worker(object):
             process.start()
 
 if __name__ == "__main__":
-    worker = Worker(HOST, PORT)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', type=int, required=True)
+    args = parser.parse_args()
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else args.port
+    worker = Worker(HOST, port)
     try:
         print 'start'
         worker.start()

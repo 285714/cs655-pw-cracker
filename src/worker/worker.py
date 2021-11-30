@@ -28,21 +28,25 @@ def consume(conn, type=str):
             data = conn.recv(1024)
             msg += data.decode()
 def search_and_deliver(conn, x, y, hash, frequency):
-    c = x
-    while c < y:
-        r = range(c, min(y, c + frequency))
-        result = search(r, hash)
-        if result == "":
-            conn.sendall(("Not found " + str(y)+ "\n").encode())
-        else:
-            conn.sendall((result + "\n").encode())
-        c = min(y, c + frequency)
-
-def handle(conn):
     try:
+        c = x
+        while c < y:
+            r = range(c, min(y, c + frequency))
+            result = search.search(r, hash)
+            if result == "":
+                conn.sendall(("Not Found " + str(r[-1])+ "\n").encode())
+            else:
+                conn.sendall((result + "\n").encode())
+                break
+            c = min(y, c + frequency)
+    except Exception as e:
+        print(e)
+
+def handle(conn, address):
+    try:
+        p = None
         while True:
             message = consume(conn)
-            p = None
             if message.startswith("Connection"):
                 conn.sendall(b"200 OK: Ready\n")
             elif message.startswith("Compute"):
@@ -56,9 +60,10 @@ def handle(conn):
             elif message.startswith("Stop"):
                 if p is not None:
                     p.terminate()
-                conn.close()
-    except:
-        print('Error')
+                    p.join()
+                # conn.close()
+    except Exception as e:
+        print('Error', e)
     finally:
         conn.close()
 
@@ -76,8 +81,8 @@ class Worker(object):
         while True:
             conn, address = self.socket.accept()
             process = multiprocessing.Process(
-                target=handle, args=(conn))
-            process.daemon = True
+                target=handle, args=(conn, address))
+            # process.daemon = True
             process.start()
 
 if __name__ == "__main__":

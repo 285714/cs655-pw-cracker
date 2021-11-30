@@ -87,12 +87,12 @@ if __name__ == "__main__":
     port = args.port
     worker = Worker(HOST, port)
     try:
-        print 'start'
+        print('start')
         worker.start()
     except:
-        print 'something wrong happened, a keyboard break ?'
+        print('something wrong happened, a keyboard break ?')
     finally:
         for process in multiprocessing.active_children():
             process.terminate()
             process.join()
-    print 'Goodbye'
+    print('Goodbye')

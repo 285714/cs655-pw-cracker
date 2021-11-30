@@ -84,7 +84,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, required=True)
     args = parser.parse_args()
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else args.port
+    port = args.port
     worker = Worker(HOST, port)
     try:
         print 'start'

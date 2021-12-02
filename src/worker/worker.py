@@ -7,7 +7,8 @@ import argparse
 # format of the command line arguments: server.py hostname port
 # setting port number to a command line parameter or to the default value 58123
 HOST = '0.0.0.0'
-frequency = 10000 # number of steps that the worker sends
+# frequency = 10000 # number of steps that the worker sends
+intval = 1 # time [seconds] until worker should send some response
 
 """
 Message from the server as follows
@@ -27,18 +28,20 @@ def consume(conn, type=str):
         else:
             data = conn.recv(1024)
             msg += data.decode()
-def search_and_deliver(conn, x, y, hash, frequency):
+
+def search_and_deliver(conn, x, y, hash, intval):
     try:
         c = x
         while c < y:
-            r = range(c, min(y, c + frequency))
-            result = search.search(r, hash)
-            if result == "":
-                conn.sendall(("Not Found " + str(r[-1])+ "\n").encode())
+            r = range(c, y)
+            result = search.search(r, hash, intval)
+            if type(result) == int:
+                c = result + 1
+                # print("Not Found {}\n".format(result))
+                conn.sendall("Not Found {}\n".format(result).encode())
             else:
-                conn.sendall((result + "\n").encode())
+                conn.sendall("{}\n".format(result).encode())
                 break
-            c = min(y, c + frequency)
     except Exception as e:
         print(e)
 
@@ -54,7 +57,7 @@ def handle(conn, address):
                 x, y = int(x), int(y)
                 p = multiprocessing.Process(
                     target=search_and_deliver,
-                    args=(conn, x, y, hash, frequency)
+                    args=(conn, x, y, hash, intval)
                 )
                 p.start()
             elif message.startswith("Stop"):

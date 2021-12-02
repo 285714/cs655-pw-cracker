@@ -1,4 +1,5 @@
 import hashlib
+import time
 
 def map_order_to_letter(c):
     """
@@ -22,13 +23,16 @@ def convert_order_to_string(n):
         a = a // 52
     return result
 
-def search(range_number, hash):
+def search(range_number, hash, intval):
     """Output the 5-character string in the range if md5 hash matched the input
     Output '' if none matches
     """
+    start_time = time.time()
     for n in range_number:
         p = convert_order_to_string(n)
         h = hashlib.md5(p.encode()).hexdigest()
         if h == hash:
             return p
-    return ""
+        if time.time() - start_time > intval:
+            return n
+    return n

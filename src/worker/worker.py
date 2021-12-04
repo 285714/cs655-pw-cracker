@@ -90,9 +90,9 @@ class Worker(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, required=True)
+    parser.add_argument('--port', type=int, required=False)
     args = parser.parse_args()
-    port = args.port
+    port = args.port or 58800
     worker = Worker(HOST, port)
     try:
         print('start')

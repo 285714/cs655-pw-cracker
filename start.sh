@@ -2,7 +2,7 @@
 
 cd /home/cs655-pw-cracker/
 
-if [ "$HOSTNAME" = server ]; then
+if [[ "$HOSTNAME" = server* ]]; then
     cd web
     sudo python3 httpserver.py
 else

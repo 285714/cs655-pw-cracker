@@ -3,11 +3,12 @@
   <head>
     <title>CS655 Password Cracker</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js" integrity="sha512-8pbzenDolL1l5OPSsoURCx9TEdMFTaeFipASVrMYKhuYtly+k3tcsQYliOEKTmuB1t7yuzAiVo+yd7SJz+ijFQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
       body {
         font-family: sans-serif, Arial;
         margin: auto;
-        max-width: 500px;
+        max-width: 700px;
         text-align: center;
       }
       table {
@@ -19,18 +20,35 @@
     <script>
       rowIds = {};
 
-      function crack(hash) {
-        $.get("/crack/" + encodeURIComponent(hash));
+      setInterval(function() {
+        $.getJSON("/delta", function(delta){
+          for (const [hash, [solution, time]] of Object.entries(delta)) {
+            id = rowIds[hash];
+            $(".row-" + id + " > .solution").html(solution);
+            $(".row-" + id + " > .time").html((Math.round(100 * time) / 100) + "s");
+          }
+        });
+      }, 1000);
+
+      function crack(hash, num_workers) {
+        $.get("/crack/" + encodeURIComponent(hash) + "/" + num_workers);
         rowIds[hash] = parseInt(Math.random() * 1e9);
-        row = '<tr id="row-' + rowIds[hash] + '"><td>' + hash + '</td>' +
+        row = '<tr class="row-' + rowIds[hash] + '"><td>' + hash + '</td>' +
           '<td class="solution">Computing...</td><td class="time"></td></tr>';
         $('table tr:last').after(row);
       }
 
       $(function() {
         $("form").submit(function(event) {
-          crack($("#hash").val());
+          hash = $("#hash").val();
+          password = $("#password").val();
+          if (password && password.length == 5)
+            hash = md5(password)
+          num_workers = $("#num_workers").val();
+          if (hash)
+            crack(hash, num_workers);
           $("#hash").val("");
+          $("#password").val("");
           event.preventDefault();
         });
       })
@@ -39,8 +57,15 @@
   <body>
     <h1>CS655 Password Cracker</h1>
     <form>
+      <label for="hash">Password</label>
+      <input type="text" id="password" name="password" maxlength="5" size="5">
+      &nbsp;
       <label for="hash">MD5-Hash</label>
       <input type="text" id="hash" name="hash">
+      &nbsp;
+      <label for="hash">Workers</label>
+      <input type="text" id="num_workers" name="num_workers" maxlength="3" size="3" value="1">
+      &nbsp;
       <input type="submit" value="Crack">
     </form>
     <table>

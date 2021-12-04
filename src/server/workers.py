@@ -9,7 +9,7 @@ if True or os.environ['HOSTNAME'] == "server":
     WORKERS = []
     for interface in interfaces:
         m = re.search("(eth[1-9]\d*):", interface)
-        if m is None: break
+        if m is None: continue
         name = m[1]
         m = re.search("inet (\S+)", interface)
         ip = m[1]

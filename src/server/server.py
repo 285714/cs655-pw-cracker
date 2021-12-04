@@ -5,11 +5,15 @@ import math
 from multiprocessing import Pool, Manager
 from workers import WORKERS
 import os
+import time
 
 SOCKET_AMOUNT = 100
 MAX_RANGE = 52**5
 MAX_POWER = 100.0
 MIN_POWER = 1.0
+
+TIME_TO_RECONNECT = 5
+RECONNECT_ATTEMPT = 10
 
 worker_power = "./worker_power"
 
@@ -21,7 +25,6 @@ def init():
 
 def listener(q):
     while True:
-        print("listener")
         m = q.get()
         with open(worker_power, 'w') as f:
             if m == 'kill':
@@ -38,13 +41,19 @@ def update_worker_power(q, w, t):
         q.put(pw)
 
 def get_next_worker():
-    print("get_next_worker")
-    with open(worker_power, 'r') as f:
-        pw = f.readlines()[0].split()
-        workers = [float(i) for i in pw]
-        print(workers)
-        worker_order = [w[0] for w in sorted(enumerate(workers), key=lambda x:x[1])]
-        return worker_order[0]
+    lines = []
+    try:
+        while len(lines) == 0:
+            with open(worker_power, 'r') as f:
+                lines = f.readlines()
+                if len(lines) != 0:
+                    pw = lines[0].split()
+                    workers = [float(i) for i in pw]
+                    worker_order = [w[0] for w in sorted(enumerate(workers), key=lambda x:-x[1])]
+                    return worker_order[0]
+    except Exception as e:
+        print(e)
+        return 0
 def penalty_down(x):
     return max(MIN_POWER,round(x/2))
 
@@ -52,7 +61,7 @@ def penalty_new_worker(x):
     return min(MAX_POWER,x-1)
 
 def addback_power(x):
-    return max(MIN_POWER,round(x/2))
+    return max(MIN_POWER,x+2)
 
 def read_until_newline(s):
     try:
@@ -64,14 +73,20 @@ def read_until_newline(s):
         return
 
 def assign_new_worker(q, w):
-    if w >= 0 and w < len(WORKERS):
-        update_worker_power(q, w, penalty_down)
-    new_w = get_next_worker()
-    hostname, port = WORKERS[new_w]
-    new_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    new_sock.connect((hostname, port))
-    update_worker_power(q, new_w, penalty_new_worker)
-    return new_w, new_sock
+    new_w = 0
+    try:
+        if w is not None and w >= 0 and w < len(WORKERS):
+            update_worker_power(q, w, penalty_down)
+        new_w = get_next_worker()
+        hostname, port = WORKERS[new_w]
+        new_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        new_sock.connect((hostname, port))
+        update_worker_power(q, new_w, penalty_new_worker)
+        return new_w, new_sock
+    except Exception as e:
+        print(e)
+        update_worker_power(q, new_w, penalty_down)
+        return None, None
 
 def connect_worker(q, w, sock, x, y, hash, worker_delay=3):
     # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -83,9 +98,23 @@ def connect_worker(q, w, sock, x, y, hash, worker_delay=3):
         sock.sendall(str.encode("Connection\n"))
         result = read_until_newline(sock)
         if result is None:
-            new_w, new_sock = assign_new_worker(q, w)
+            attempt = 0
+            new_w = w
+            while True:
+                new_w, new_sock = assign_new_worker(q, new_w)
+                if new_w is None:
+                    attempt += 1
+                    print("attempt {} to connect worker".format(attempt))
+                    time.sleep(TIME_TO_RECONNECT) #wait for 5 seconds
+                if attempt > RECONNECT_ATTEMPT:
+                    break
+                elif new_w is not None:
+                    break
             print(w, "down", "assign", new_w)
-            return connect_worker(q, new_w, new_sock, last_y, y, hash, worker_delay)
+            if new_w is not None:
+                return connect_worker(q, new_w, new_sock, last_y, y, hash, worker_delay)
+            else:
+                return "Cannot connect"
 
         else:
             assert(result == "200 OK: Ready")
@@ -95,9 +124,23 @@ def connect_worker(q, w, sock, x, y, hash, worker_delay=3):
         while True:
             msg = read_until_newline(sock)
             if msg is None:
-                new_w, new_sock = assign_new_worker(q, w)
+                attempt = 0
+                new_w = w
+                while True:
+                    new_w, new_sock = assign_new_worker(q, new_w)
+                    if new_w is None:
+                        attempt += 1
+                        print("attempt {} to connect worker".format(attempt))
+                        time.sleep(TIME_TO_RECONNECT) #wait for 5 seconds
+                    if attempt > RECONNECT_ATTEMPT:
+                        break
+                    elif new_w is not None:
+                        break
                 print(w, "down", "assign", new_w)
-                return connect_worker(q, new_w, new_sock, last_y, y, hash, worker_delay)
+                if new_w is not None:
+                    return connect_worker(q, new_w, new_sock, last_y, y, hash, worker_delay)
+                else:
+                    return "Cannot connect"
             elif len(msg) == 5:
                 output = msg
                 break
@@ -113,9 +156,23 @@ def connect_worker(q, w, sock, x, y, hash, worker_delay=3):
     except Exception as e:
         print(e)
         if last_y < y:
-            new_w, new_sock = assign_new_worker(q, w)
+            attempt = 0
+            new_w = w
+            while True:
+                new_w, new_sock = assign_new_worker(q, new_w)
+                if new_w is None:
+                    attempt += 1
+                    print("attempt {} to connect worker".format(attempt))
+                    time.sleep(TIME_TO_RECONNECT) #wait for 5 seconds
+                if attempt > RECONNECT_ATTEMPT:
+                    break
+                elif new_w is not None:
+                    break
             print(w, "down", "assign", new_w)
-            return connect_worker(q, new_w, new_sock, last_y, y, hash, worker_delay)
+            if new_w is not None:
+                return connect_worker(q, new_w, new_sock, last_y, y, hash, worker_delay)
+            else:
+                return "Cannot connect"
     finally:
         sock.close()
     return output
@@ -153,10 +210,15 @@ def map_reduce(pool, q, hash, n):
         w, sock, x, y = assigned_workers[i]
         processes.append(pool.apply_async(connect_worker, (q, w, sock, x, y, hash)))
     while True:
+        ready = 0
         for i, f in enumerate(processes):
+            if f.ready():
+                ready += 1
             if f.ready() and f.successful() and len(f.get()) == 5:
                 output = f.get()
                 break
+        if ready == len(processes):
+            break
         if output != "" and len(output) == 5:
             break
     # pool.close()
@@ -166,7 +228,7 @@ def map_reduce(pool, q, hash, n):
         try:
             sock.sendall(str.encode("Stop\n"))
             sock.close()
-        except sock.error as e:
+        except Exception as e:
             print(e)
         finally:
             sock.close()
@@ -190,4 +252,4 @@ if __name__ == "__main__":
     watcher = pool.apply_async(listener, (q,))
 
     output = map_reduce(pool, q, args.hash, args.num_workers)
-    print(output)
+    print("final output:", output)

@@ -2,9 +2,11 @@ import sys
 import socket
 import argparse
 import math
-from multiprocessing import Pool, Manager
+from multiprocessing import Pool, Manager, Process
 from workers import WORKERS
 import os
+import time
+
 
 SOCKET_AMOUNT = 100
 MAX_RANGE = 52**5
@@ -173,21 +175,38 @@ def map_reduce(pool, q, hash, n):
     return output
 
 
+init()
+pool = Pool()
+manager = Manager()
+q = manager.Queue()
+solved_hashes = manager.dict()
+watcher = pool.apply_async(listener, (q,))
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    # parser.add_argument('--port', type=int, required=True)
-    # parser.add_argument('--hostname', type=str, required=True)
-    # parser.add_argument('--x', type=int, required=True)
-    # parser.add_argument('--y', type=int, required=True)
+#   parser.add_argument('--port', type=int, required=True)
+#   parser.add_argument('--hostname', type=str, required=True)
+#   parser.add_argument('--x', type=int, required=True)
+#   parser.add_argument('--y', type=int, required=True)
     parser.add_argument('--hash', type=str, required=True)
     parser.add_argument('--num_workers', type=int, required=True)
-
     args = parser.parse_args()
-    init()
-    pool = Pool()
-    manager = Manager()
-    q = manager.Queue()
-    watcher = pool.apply_async(listener, (q,))
 
-    output = map_reduce(pool, q, args.hash, args.num_workers)
-    print(output)
+    solve(args.hash, args.num_workers)
+#   output = map_reduce(pool, q, args.hash, args.num_workers)
+#   print(output)
+
+
+def solve_async(hash, num_workers, q, solved_hashes):
+    print("solving MD5(?) = {}".format(hash))
+    t = time.time()
+    output = map_reduce(pool, q, hash, num_workers)
+    solved_hashes[hash] = (output, time.time() - t)
+    print("solved MD5({}) = {}".format(output, hash))
+
+
+def solve(hash, num_workers=None):
+    num_workers = len(WORKERS) if num_workers is None else num_workers
+    p = Process(target=solve_async, args=(hash, num_workers, q, solved_hashes))
+    p.start()
+

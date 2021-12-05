@@ -35,6 +35,7 @@ def search_and_deliver(conn, x, y, hash, intval):
         while c < y:
             r = range(c, y)
             result = search.search(r, hash, intval)
+            # print(result)
             if type(result) == int:
                 c = result + 1
                 # print("Not Found {}\n".format(result))

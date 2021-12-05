@@ -10,8 +10,9 @@ sys.path.append('../src/server')
 from server import solve, solved_hashes
 
 
-hostName = socket.gethostname() # "localhost"
-serverPort = 80
+hostName = socket.gethostname()
+if not hostName.startswith("server"): hostName = "localhost"
+serverPort = 8080
 
 
 class MyServer(BaseHTTPRequestHandler):
@@ -38,8 +39,8 @@ class MyServer(BaseHTTPRequestHandler):
                 if ip not in self.sessions:
                     self.sessions[ip] = []
                 self.sessions[ip].append(md5hash)
-                solve(md5hash, num_workers)
                 print("webserver: forwarding request for {} on {} workers".format(md5hash, num_workers))
+                solve(md5hash, num_workers)
             else:
                 self.send_response(500)
                 self.send_header("Content-type", "text/html")
@@ -49,6 +50,7 @@ class MyServer(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
+            print("< <", solved_hashes)
             unsolved_hashes = self.sessions[ip] if ip in self.sessions else []
             now_solved = { hash: solved_hashes[hash]
                     for hash in unsolved_hashes if hash in solved_hashes }

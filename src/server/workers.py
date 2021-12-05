@@ -1,10 +1,10 @@
 # list of workers, each specified by a hostname + port
-
 import os
 import re
+import socket
 
 
-if True or os.environ['HOSTNAME'] == "server":
+if socket.gethostname().startswith("server"):
     interfaces = os.popen("ifconfig").read().split("\n\n")
     WORKERS = []
     for interface in interfaces:

@@ -202,7 +202,10 @@ def partition_job(q, start, end, n): # to change
         assigned_workers.append((w, new_sock, x, y))
     return assigned_workers
 
-def map_reduce(pool, q, hash, n):
+def map_reduce(q, hash, n):
+    pool = Pool()
+    # watcher = pool.apply_async(listener, (q,))
+
     sockets = []
     processes = []
     assigned_workers = partition_job(q, 0, MAX_RANGE, n)
@@ -236,12 +239,31 @@ def map_reduce(pool, q, hash, n):
     return output
 
 
-init()
-pool = Pool()
+def solve_async(hash, num_workers, q, solved_hashes):
+    init()
+    # manager = Manager()
+    # solved_hashes = manager.dict()
+    # q = manager.Queue()
+
+    print("solving MD5(?) = {} on {} workers".format(hash, num_workers))
+    t = time.time()
+    output = map_reduce(q, hash, num_workers)
+    solved_hashes[hash] = (output, time.time() - t)
+    print("solved MD5({}) = {}".format(output, hash))
+
+
+def solve(hash, num_workers=None):
+    if num_workers is None or num_workers > len(WORKERS):
+        num_workers = len(WORKERS)
+    p = Process(target=solve_async, args=(hash, num_workers, q, solved_hashes))
+    p.start()
+    p.join()
+
+
 manager = Manager()
-q = manager.Queue()
 solved_hashes = manager.dict()
-watcher = pool.apply_async(listener, (q,))
+q = manager.Queue()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -256,18 +278,4 @@ if __name__ == "__main__":
     solve(args.hash, args.num_workers)
 #   output = map_reduce(pool, q, args.hash, args.num_workers)
 #   print(output)
-
-
-def solve_async(hash, num_workers, q, solved_hashes):
-    print("solving MD5(?) = {}".format(hash))
-    t = time.time()
-    output = map_reduce(pool, q, hash, num_workers)
-    solved_hashes[hash] = (output, time.time() - t)
-    print("solved MD5({}) = {}".format(output, hash))
-
-
-def solve(hash, num_workers=None):
-    num_workers = len(WORKERS) if num_workers is None else num_workers
-    p = Process(target=solve_async, args=(hash, num_workers, q, solved_hashes))
-    p.start()
 

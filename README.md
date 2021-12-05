@@ -2,7 +2,7 @@
 
 Website: http://pcvm1-22.geni.it.cornell.edu:8080
 
-Repo is cloned to /home/cs655-pw-cracker and start.sh is always running. Update by running install.sh.
+Repo is cloned to /home/cs655-pw-cracker and start.sh is always running. Update by running install.sh. Restart with 'sudo systemctl restart cs655'
 
 ## Update 02/12
 

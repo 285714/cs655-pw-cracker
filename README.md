@@ -21,5 +21,5 @@ As of 02/12, the server can handle one request and multiple workers. One can tes
 
 TODO:   
 - [ ] handle the case when all worker dies, the server needs to terminate the processes.  
-- [ ] connect the web and the server, handle multiple requests from the web
+- [x] connect the web and the server, handle multiple requests from the web
 - [ ] port to geni and test

@@ -3,12 +3,14 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib.parse
 from multiprocessing import Pool, Manager, Process
 import json
+import os
+import socket
 
 sys.path.append('../src/server')
 from server import solve, solved_hashes
 
 
-hostName = "localhost"
+hostName = socket.gethostname() # "localhost"
 serverPort = 80
 
 

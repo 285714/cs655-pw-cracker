@@ -50,7 +50,6 @@ class MyServer(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
-            print("< <", solved_hashes)
             unsolved_hashes = self.sessions[ip] if ip in self.sessions else []
             now_solved = { hash: solved_hashes[hash]
                     for hash in unsolved_hashes if hash in solved_hashes }

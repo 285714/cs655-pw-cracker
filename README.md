@@ -20,7 +20,7 @@ To test the server
 As of 02/12, the server can handle one request and multiple workers. One can test what happens if a worker dies by stopping the worker code. We need to devise a way to test the worker delay. 
 
 TODO:   
-- [ ] handle the case when all worker dies, the server needs to terminate the processes.  
+- [x] handle the case when all worker dies, the server needs to terminate the processes (after some reconnection attempts).  
 - [x] connect the web and the server, handle multiple requests from the web
 - [x] port to geni and test
 - [ ] add more workers (double check whether IP addresses are guessed correctly by server/workers.py)

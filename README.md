@@ -24,3 +24,9 @@ TODO:
 - [x] connect the web and the server, handle multiple requests from the web
 - [x] port to geni and test
 - [ ] add more workers (double check whether IP addresses are guessed correctly by server/workers.py)
+
+## Required Packages (on server)
+
+> sudo apt-get update
+> sudo apt install python3-pip
+> sudo pip3 install numpy

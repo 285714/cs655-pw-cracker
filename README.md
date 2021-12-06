@@ -28,5 +28,7 @@ TODO:
 ## Required Packages (on server)
 
 > sudo apt-get update
+> 
 > sudo apt install python3-pip
+> 
 > sudo pip3 install numpy

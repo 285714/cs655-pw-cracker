@@ -300,7 +300,7 @@ def solve(hash, num_workers=None):
         num_workers = len(WORKERS)
     p = Process(target=solve_async, args=(hash, num_workers, q, solved_hashes))
     p.start()
-    p.join()
+    # p.join()
 
 
 manager = Manager()

@@ -1,8 +1,8 @@
 # cs655-pw-cracker
 
-Website: http://pcvm1-22.geni.it.cornell.edu/
+Website: http://pcvm1-22.geni.it.cornell.edu:8080
 
-Repo is cloned to /home/cs655-pw-cracker and start.sh is always running. Update by running install.sh.
+Repo is cloned to /home/cs655-pw-cracker and start.sh is always running. Update by running install.sh. Restart with 'sudo systemctl restart cs655'
 
 ## Update 02/12
 
@@ -20,6 +20,15 @@ To test the server
 As of 02/12, the server can handle one request and multiple workers. One can test what happens if a worker dies by stopping the worker code. We need to devise a way to test the worker delay. 
 
 TODO:   
-- [ ] handle the case when all worker dies, the server needs to terminate the processes.  
+- [x] handle the case when all worker dies, the server needs to terminate the processes (after some reconnection attempts).  
 - [x] connect the web and the server, handle multiple requests from the web
-- [ ] port to geni and test
+- [x] port to geni and test
+- [ ] add more workers (double check whether IP addresses are guessed correctly by server/workers.py)
+
+## Required Packages (on server)
+
+> sudo apt-get update
+> 
+> sudo apt install python3-pip
+> 
+> sudo pip3 install numpy

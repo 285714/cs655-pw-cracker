@@ -6,6 +6,7 @@ from multiprocessing import Pool, Manager, Process
 from workers import WORKERS
 import os
 import time
+import numpy as np
 
 
 SOCKET_AMOUNT = 100
@@ -13,8 +14,11 @@ MAX_RANGE = 52**5
 MAX_POWER = 100.0
 MIN_POWER = 1.0
 
-TIME_TO_RECONNECT = 5
-RECONNECT_ATTEMPT = 10
+TIME_TO_RECONNECT = 10
+RECONNECT_ATTEMPT = 15
+
+STATUS_ACTIVE = 'active'
+STATUS_DOWN = 'down'
 
 worker_power = "./worker_power"
 
@@ -22,7 +26,9 @@ worker_power = "./worker_power"
 def init():
     with open(worker_power, 'w') as f:
         for i in range(len(WORKERS)):
-            f.write(str(MAX_POWER) + " ")
+            f.write(str(MAX_POWER) + " " + STATUS_ACTIVE)
+            if i < len(WORKERS)-1:
+                f.write("\n")
 
 def listener(q):
     while True:
@@ -31,15 +37,28 @@ def listener(q):
             if m == 'kill':
                 break
             for i in range(len(m)):
-                f.write(str(m[i]) + " ")
+                f.write(str(m[i][0]) + " " + m[i][1])
+                if i < len(m)-1:
+                    f.write("\n")
             f.flush()
 
-def update_worker_power(q, w, t):
+def update_worker_power(q, w, t, u_status):
     with open(worker_power, 'r') as f:
-        pw = f.readlines()[0].split()
-        pw[w] = str(t(float(pw[w])))
-        print("update", pw, w)
-        q.put(pw)
+        pw = f.readlines()
+        pw_updated = []
+        for i in range(len(pw)):
+            a, b = pw[i].split()
+            pw_updated.append((float(a), b))
+        if pw_updated[w][1] == STATUS_DOWN and u_status == STATUS_ACTIVE:
+            pw_updated[w] = (t(addback_reconnected_worker(float(pw_updated[w][0]))), u_status)
+            # if worker can be reconnect, add back the power
+        if pw_updated[w][1] == STATUS_DOWN and u_status == STATUS_DOWN:
+            pw_updated[w] = (penalty_new_worker(float(pw_updated[w][0])), u_status)
+            # ease the penalty
+        else:
+            pw_updated[w] = (t(float(pw_updated[w][0])), u_status)
+        print("update", pw_updated, w)
+        q.put(pw_updated)
 
 def get_next_worker():
     lines = []
@@ -48,21 +67,23 @@ def get_next_worker():
             with open(worker_power, 'r') as f:
                 lines = f.readlines()
                 if len(lines) != 0:
-                    pw = lines[0].split()
-                    workers = [float(i) for i in pw]
-                    worker_order = [w[0] for w in sorted(enumerate(workers), key=lambda x:-x[1])]
-                    return worker_order[0]
+                    workers = np.array([float(l.split()[0]) for l in lines])
+                    p_workers = workers/sum(workers)
+                    return np.random.choice(len(workers), 1, p=p_workers)[0]
     except Exception as e:
         print(e)
-        return 0
+        return np.random.choice(len(WORKERS), 1)[0]
 def penalty_down(x):
     return max(MIN_POWER,round(x/2))
 
 def penalty_new_worker(x):
-    return min(MAX_POWER,x-1)
+    return max(MIN_POWER,x-1)
 
 def addback_power(x):
-    return max(MIN_POWER,x+2)
+    return min(MAX_POWER,x+1)
+
+def addback_reconnected_worker(x):
+    return min(MAX_POWER,x*2)
 
 def read_until_newline(s):
     try:
@@ -77,16 +98,16 @@ def assign_new_worker(q, w):
     new_w = 0
     try:
         if w is not None and w >= 0 and w < len(WORKERS):
-            update_worker_power(q, w, penalty_down)
+            update_worker_power(q, w, penalty_down, STATUS_DOWN)
         new_w = get_next_worker()
         hostname, port = WORKERS[new_w]
         new_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         new_sock.connect((hostname, port))
-        update_worker_power(q, new_w, penalty_new_worker)
+        update_worker_power(q, new_w, penalty_new_worker, STATUS_ACTIVE)
         return new_w, new_sock
     except Exception as e:
         print(e)
-        update_worker_power(q, new_w, penalty_down)
+        update_worker_power(q, new_w, penalty_down, STATUS_DOWN)
         return None, None
 
 def connect_worker(q, w, sock, x, y, hash, worker_delay=3):
@@ -152,7 +173,7 @@ def connect_worker(q, w, sock, x, y, hash, worker_delay=3):
             else:
                 break
         sock.sendall(str.encode("Stop\n"))
-        update_worker_power(q, w, addback_power)
+        update_worker_power(q, w, addback_power, STATUS_ACTIVE)
         sock.close()
     except Exception as e:
         print(e)
@@ -181,25 +202,45 @@ def connect_worker(q, w, sock, x, y, hash, worker_delay=3):
 def partition_job(q, start, end, n): # to change
     assert(n <= len(WORKERS))
     assigned_workers = []
-    per_worker = int(math.ceil((end-start)/n))
+    per_worker = int(np.ceil((end-start)/n))
 
     with open(worker_power, 'r') as f:
-        pw = f.readlines()[0].split()
-        workers = [float(i) for i in pw]
-        worker_order = [w[0] for w in sorted(enumerate(workers), key=lambda x:x[1])]
+        pw = f.readlines()
+        workers = [float(l.split()[0]) for l in pw]
+        worker_order = [w[0] for w in sorted(enumerate(workers), key=lambda x:-x[1])]
 
-    for i in range(n):
-        x = i*per_worker
-        y = min(end, (i+1)*per_worker)
-        w = worker_order[i]
+    current_partition = 0
+    current_worker = 0
 
-        hostname, port = WORKERS[w]
-        new_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        new_sock.connect((hostname, port))
-        update_worker_power(q, w, penalty_new_worker)
+    while current_partition < n:
+        x = current_partition*per_worker
+        y = min(end, (current_partition+1)*per_worker)
 
+        check_status = False
+        attempt = 0
 
-        assigned_workers.append((w, new_sock, x, y))
+        while check_status == False:
+            try:
+                w = worker_order[current_worker]
+                hostname, port = WORKERS[w]
+                new_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                new_sock.connect((hostname, port))
+                update_worker_power(q, w, penalty_new_worker, STATUS_ACTIVE)
+                assigned_workers.append((w, new_sock, x, y))
+                check_status = True
+                current_partition += 1
+                current_worker = (current_worker + 1)%len(WORKERS)
+            except Exception as e:
+                print(e)
+                update_worker_power(q, w, penalty_down, STATUS_DOWN)
+                attempt += 1
+                if attempt % len(WORKERS) == 0:
+                    time.sleep(TIME_TO_RECONNECT)
+                current_worker = (current_worker + 1)%len(WORKERS)
+                if attempt > RECONNECT_ATTEMPT * len(WORKERS):
+                    break
+        if check_status == False:
+            return # No available workers
     return assigned_workers
 
 def map_reduce(q, hash, n):
@@ -209,6 +250,8 @@ def map_reduce(q, hash, n):
     sockets = []
     processes = []
     assigned_workers = partition_job(q, 0, MAX_RANGE, n)
+    if assigned_workers is None:
+        return "No available workers"
     output = ""
     for i in range(n):
         w, sock, x, y = assigned_workers[i]
@@ -264,6 +307,9 @@ manager = Manager()
 solved_hashes = manager.dict()
 q = manager.Queue()
 
+pool = Pool()
+watcher = pool.apply_async(listener, (q,))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -278,4 +324,3 @@ if __name__ == "__main__":
     solve(args.hash, args.num_workers)
 #   output = map_reduce(pool, q, args.hash, args.num_workers)
 #   print(output)
-

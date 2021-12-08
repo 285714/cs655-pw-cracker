@@ -28,6 +28,8 @@ def consume(conn, type=str):
         else:
             data = conn.recv(1024)
             msg += data.decode()
+            # print("received", msg)
+            if msg == "": return msg
 
 def search_and_deliver(conn, x, y, hash, intval):
     try:
@@ -51,6 +53,7 @@ def handle(conn, address):
         p = None
         while True:
             message = consume(conn)
+            # print(">>>", message)
             if message.startswith("Connection"):
                 conn.sendall(b"200 OK: Ready\n")
             elif message.startswith("Compute"):
@@ -61,10 +64,11 @@ def handle(conn, address):
                     args=(conn, x, y, hash, intval)
                 )
                 p.start()
-            elif message.startswith("Stop"):
+            elif message.startswith("Stop") or not message:
                 if p is not None:
                     p.terminate()
                     p.join()
+                break
                 # conn.close()
     except Exception as e:
         print('Error', e)
@@ -81,9 +85,12 @@ class Worker(object):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.bind((self.hostname, self.port))
         self.socket.listen(1)
+        self.socket.settimeout(10)
+        self.socket.setblocking(True)
 
         while True:
             conn, address = self.socket.accept()
+            # print("ACCEPTING")
             process = multiprocessing.Process(
                 target=handle, args=(conn, address))
             # process.daemon = True

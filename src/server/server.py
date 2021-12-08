@@ -317,7 +317,6 @@ if __name__ == "__main__":
 
 
 if __name__ == "__main__":
-    freeze_support()
     parser = argparse.ArgumentParser()
 #   parser.add_argument('--port', type=int, required=True)
 #   parser.add_argument('--hostname', type=str, required=True)

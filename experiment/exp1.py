@@ -10,12 +10,12 @@ import search
 import multiprocessing
 import numpy as np
 
-def measure_average_delay_single_request(start_index, num_trials):
+def measure_average_delay_single_request(start_index, num_trials, num_workers=1):
     runtime = []
     for i in range(start_index, start_index+num_trials):
         p = search.convert_order_to_string(i)
         h = hashlib.md5(p.encode()).hexdigest()
-        p = multiprocessing.Process(target=solve, args=(h, 1))
+        p = multiprocessing.Process(target=solve, args=(h, num_workers))
         p.start()
         p.join()
         print("done")
@@ -41,5 +41,6 @@ def measure_average_delay_multiple_requests(start_index, num_requests, l): # rq 
     return solved_hashes
 
 if __name__ == "__main__":
-    print(measure_average_delay_multiple_requests(100000,5,5))
+    print(measure_average_delay_single_request(10000, 10))
+    #print(measure_average_delay_multiple_requests(100000,5,5))
 ~                                                                

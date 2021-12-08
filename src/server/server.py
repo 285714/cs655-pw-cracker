@@ -299,7 +299,7 @@ def solve(hash, num_workers=None):
 #    if __name__ == "__main__":
     p = Process(target=solve_async, args=(hash, num_workers, q, solved_hashes))
     p.start()
-    p.join()
+    # p.join()
 
 
 init()

@@ -301,19 +301,19 @@ def solve_async(hash, num_workers, q, solved_hashes):
 def solve(hash, num_workers=None):
     if num_workers is None or num_workers > len(WORKERS):
         num_workers = len(WORKERS)
-    if __name__ == "__main__":
-        p = Process(target=solve_async, args=(hash, num_workers, q, solved_hashes))
-        p.start()
-        p.join()
+#    if __name__ == "__main__":
+    p = Process(target=solve_async, args=(hash, num_workers, q, solved_hashes))
+    p.start()
+    p.join()
 
 
-if __name__ == "__main__":
-    manager = Manager()
-    solved_hashes = manager.dict()
-    q = manager.Queue()
+# if __name__ == "__main__":
+manager = Manager()
+solved_hashes = manager.dict()
+q = manager.Queue()
 
-    pool = Pool()
-    watcher = pool.apply_async(listener, (q,))
+pool = Pool()
+watcher = pool.apply_async(listener, (q,))
 
 
 if __name__ == "__main__":

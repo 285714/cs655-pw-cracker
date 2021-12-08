@@ -292,17 +292,22 @@ def solve_async(hash, num_workers, q, solved_hashes):
     t = time.time()
     output = map_reduce(q, hash, num_workers)
     solved_hashes[hash] = (output, time.time() - t)
-    print("solved MD5({}) = {}".format(output, hash))
+    if output == "":
+        print("No solution")
+    else:
+        print("solved MD5({}) = {}".format(output, hash))
 
 
 def solve(hash, num_workers=None):
     if num_workers is None or num_workers > len(WORKERS):
         num_workers = len(WORKERS)
+#    if __name__ == "__main__":
     p = Process(target=solve_async, args=(hash, num_workers, q, solved_hashes))
     p.start()
-    # p.join()
+    p.join()
 
 
+# if __name__ == "__main__":
 manager = Manager()
 solved_hashes = manager.dict()
 q = manager.Queue()

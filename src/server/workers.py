@@ -24,7 +24,7 @@ if socket.gethostname().startswith("server"):
         ip = ip_l + "." + str(3 - ip_r)
         WORKERS.append((ip, 58800))
 
-#   WORKERS = WORKERS + public_ip_workers
+    WORKERS = WORKERS + public_ip_workers
 
 else:
     WORKERS = [

@@ -22,6 +22,15 @@ def measure_average_delay_single_request(start_index, num_trials, num_workers):
         runtime.append(solved_hashes[h][1])
     return runtime
 
+ # helper method to run the multiple delays experiment   
+def delay_experiment(start_index, num_trials):
+    nums_workers = [1, 2, 3, 4, 5]
+    avg_runtime = [] # store different runtime of different no. of workers
+    for n in nums_workers:
+        runtime = measure_average_delay_single_request(start_index, num_trials, n)
+        avg_runtime.append(np.mean(runtime))
+    return avg_runtime
+
 def measure_average_delay_multiple_requests(start_index, num_requests, l): # rq arrives according to Poisson(l)
 # TODO
     runtime = []
@@ -41,5 +50,5 @@ def measure_average_delay_multiple_requests(start_index, num_requests, l): # rq 
     return solved_hashes
 
 if __name__ == "__main__":
-    print(measure_average_delay_single_request(10000, 10, 1))
+    print(delay_experiment(10000, 8))
     #print(measure_average_delay_multiple_requests(100000,5,5))

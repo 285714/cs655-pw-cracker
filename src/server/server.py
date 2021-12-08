@@ -45,10 +45,10 @@ def listener(q):
 def update_worker_power(q, w, t, u_status):
     with open(worker_power, 'r') as f:
         pw = f.readlines()
-        pw_updated = []
+        pw_updated = [(100, STATUS_ACTIVE)] * len(WORKERS)
         for i in range(len(pw)):
             a, b = pw[i].split()
-            pw_updated.append((float(a), b))
+            pw_updated[i] = (float(a), b)
         if pw_updated[w][1] == STATUS_DOWN and u_status == STATUS_ACTIVE:
             pw_updated[w] = (t(addback_reconnected_worker(float(pw_updated[w][0]))), u_status)
             # if worker can be reconnect, add back the power
@@ -283,11 +283,6 @@ def map_reduce(q, hash, n):
 
 
 def solve_async(hash, num_workers, q, solved_hashes):
-    init()
-    # manager = Manager()
-    # solved_hashes = manager.dict()
-    # q = manager.Queue()
-
     print("solving MD5(?) = {} on {} workers".format(hash, num_workers))
     t = time.time()
     output = map_reduce(q, hash, num_workers)
@@ -306,6 +301,8 @@ def solve(hash, num_workers=None):
     p.start()
     p.join()
 
+
+init()
 
 # if __name__ == "__main__":
 manager = Manager()

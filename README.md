@@ -38,4 +38,4 @@ TODO:
 * Change TCP Congestion Control version to Reno: sudo sysctl net.ipv4.tcp_congestion_control=reno 
 * To setup a specific delay time: sudo tc qdisc add dev eth0 root netem delay [time]ms (this will make sure that packets coming into the eth0 interface of any node will experience the delay)
 * To remove the setup: sudo tc qdisc del dev eth0 root netem (we need to delete the old rules before setting up new ones)
-* Same setup/deletion command for eht1, eth2, etc. interfaces
+* Same setup/deletion command for eth1, eth2, etc. interfaces

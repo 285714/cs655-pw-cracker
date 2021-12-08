@@ -4,6 +4,13 @@ import re
 import socket
 
 
+public_ip_workers = [
+        ("165.124.51.201", 58800),
+        ("165.124.51.197", 58800),
+        ("165.124.51.202", 58800),
+    ]
+
+
 if socket.gethostname().startswith("server"):
     interfaces = os.popen("ifconfig").read().split("\n\n")
     WORKERS = []
@@ -16,6 +23,8 @@ if socket.gethostname().startswith("server"):
         ip_r = int(m[2])
         ip = ip_l + "." + str(3 - ip_r)
         WORKERS.append((ip, 58800))
+
+    WORKERS = WORKERS + public_ip_workers
 
 else:
     WORKERS = [

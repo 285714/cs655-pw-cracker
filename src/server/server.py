@@ -327,4 +327,3 @@ if __name__ == "__main__":
 #   output = map_reduce(pool, q, args.hash, args.num_workers)
 #   print(output)
 
-time.sleep(1000)

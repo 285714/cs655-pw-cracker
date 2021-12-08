@@ -5,31 +5,25 @@ import sys
 sys.path.append('../src/server')
 sys.path.append('../src/worker')
 # import server
-from server import solve, solved_hashes
+from server import solve, solved_hashes, MAX_RANGE
 import search
 import multiprocessing
 import numpy as np
 
 def measure_average_delay_single_request(start_index, num_trials, num_workers):
     runtime = []
+    pwds = []
+    hashes = []
     for i in range(start_index, start_index+num_trials):
-        p = search.convert_order_to_string(i)
-        h = hashlib.md5(p.encode()).hexdigest()
-        p = multiprocessing.Process(target=solve, args=(h, num_workers))
-        p.start()
-        p.join()
+        pw = search.convert_order_to_string(i)
+        print(i, pw)
+        h = hashlib.md5(pw.encode()).hexdigest()
+        solve(h, num_workers,True)
         print("done")
         runtime.append(solved_hashes[h][1])
-    return runtime
-
- # helper method to run the multiple delays experiment   
-def delay_experiment(start_index, num_trials):
-    nums_workers = [1, 2, 3, 4, 5]
-    avg_runtime = [] # store different runtime of different no. of workers
-    for n in nums_workers:
-        runtime = measure_average_delay_single_request(start_index, num_trials, n)
-        avg_runtime.append(np.mean(runtime))
-    return avg_runtime
+        pwds.append(pw)
+        hashes.append(h)
+    return pwds, hashes, runtime
 
 def measure_average_delay_multiple_requests(start_index, num_requests, l): # rq arrives according to Poisson(l)
 # TODO
@@ -50,5 +44,12 @@ def measure_average_delay_multiple_requests(start_index, num_requests, l): # rq 
     return solved_hashes
 
 if __name__ == "__main__":
-    print(delay_experiment(10000, 8))
-    #print(measure_average_delay_multiple_requests(100000,5,5))
+    with open("average_time_pwd", 'w') as f:
+        f.write("num_workers,password,hash,runtime\n")
+    for i in range(10):
+        start_index = np.random.randint(0,MAX_RANGE)
+        print(i)
+        for num_workers in range(1,6):
+            pwds, hashes, runtime = measure_average_delay_single_request(start_index, 1, num_workers)
+            with open("average_time_pwd", 'a') as f:
+                f.write(str(num_workers) + ','+str(pwds[0]) + ',' +str(hashes[0]) + ',' +str(runtime[0]) + "\n")

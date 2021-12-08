@@ -244,7 +244,7 @@ def partition_job(q, start, end, n): # to change
     return assigned_workers
 
 def map_reduce(q, hash, n):
-    pool = Pool()
+    pool = Pool(10)
     # watcher = pool.apply_async(listener, (q,))
 
     sockets = []
@@ -293,13 +293,13 @@ def solve_async(hash, num_workers, q, solved_hashes):
         print("solved MD5({}) = {}".format(output, hash))
 
 
-def solve(hash, num_workers=None):
+def solve(hash, num_workers=None, blocking=False):
     if num_workers is None or num_workers > len(WORKERS):
         num_workers = len(WORKERS)
 #    if __name__ == "__main__":
     p = Process(target=solve_async, args=(hash, num_workers, q, solved_hashes))
     p.start()
-    # p.join()
+    if blocking: p.join()
 
 
 init()
@@ -326,3 +326,5 @@ if __name__ == "__main__":
     solve(args.hash, args.num_workers)
 #   output = map_reduce(pool, q, args.hash, args.num_workers)
 #   print(output)
+
+time.sleep(1000)

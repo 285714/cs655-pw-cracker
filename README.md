@@ -2,12 +2,10 @@
 
 Website: http://pcvm1-22.geni.it.cornell.edu:8080
 
-Repo is cloned to /home/cs655-pw-cracker and start.sh is always running. Update by running install.sh. To restart run
+Repo is cloned to /home/cs655-pw-cracker and start.sh is deamonized. Update by running `/install.sh`. To restart, run
 ```console
 sudo systemctl restart cs655
 ```
-
-[NEED DELETE OR EDIT THIS] The server can handle one request and multiple workers. One can test what happens if a worker dies by stopping the worker code. We need to devise a way to test the worker delay.
 
 ## TODO:   
 - [x] handle the case when all worker dies, the server needs to terminate the processes (after some reconnection attempts).  
@@ -19,6 +17,13 @@ sudo systemctl restart cs655
 
 ## Instructions
 
+On GENI, all scripts are automatically installed and the deamonized via systemctl. Note that the server node requires numpy, which can be installed as follows:
+```console
+sudo apt-get update
+sudo apt install python3-pip
+sudo pip3 install numpy
+```
+
 ### To run locally:
 To run workers: on several machines/ports run workers
 ```console
@@ -27,13 +32,8 @@ python worker.py --port x, where x is the port number
 ```
 
 To run the server:
-* First, edit ./src/server/workers.py to add the list of workers used. Each entry includes (hostname, port)
-* Install additional packages:
-```console
-sudo apt-get update
-sudo apt install python3-pip
-sudo pip3 install numpy
-```
+* First, edit `./src/server/workers.py` to add the list of workers used. Each entry includes (hostname, port)
+
 * Run the server:
 ```console
 python server.py --hash h --num_workers n

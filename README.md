@@ -7,16 +7,7 @@ Repo is cloned to /home/cs655-pw-cracker and start.sh is deamonized. Update by r
 sudo systemctl restart cs655
 ```
 
-## TODO:   
-- [x] handle the case when all worker dies, the server needs to terminate the processes (after some reconnection attempts).  
-- [x] connect the web and the server, handle multiple requests from the web
-- [x] port to geni and test
-- [x] add more workers (double check whether IP addresses are guessed correctly by server/workers.py)
-- [ ] run experiments and add plots to the report
-
-
 ## Instructions
-
 On GENI, all scripts are automatically installed and the deamonized via systemctl. Note that the server node requires numpy, which can be installed as follows:
 ```console
 sudo apt-get update

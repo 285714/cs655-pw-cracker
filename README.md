@@ -42,6 +42,7 @@ Where h is a md5 hash and n is the number of workers to used.
 
 ### To run on GENI:
 Create an instance, using rspec.xml GENI configuration file.
+Wait for all components to start running. After that follow the instructions above.
 
 ### Set delays on nodes for the experiments
 To change TCP Congestion Control version to Reno:
